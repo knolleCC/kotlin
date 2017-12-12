@@ -307,6 +307,13 @@ class LazyModuleDependencies<M : ModuleInfo>(
 
     override val allDependencies: List<ModuleDescriptorImpl> get() = dependencies()
 
+    private val expectedBy = storageManager.createNullableLazyValue {
+        module.expectedBy?.let { resolverForProject.descriptorForModule(it as M) }
+    }
+
+    override val expectedByDependency: ModuleDescriptorImpl?
+        get() = expectedBy()
+
     override val modulesWhoseInternalsAreVisible: Set<ModuleDescriptorImpl>
         get() =
             module.modulesWhoseInternalsAreVisible().mapTo(LinkedHashSet()) {
