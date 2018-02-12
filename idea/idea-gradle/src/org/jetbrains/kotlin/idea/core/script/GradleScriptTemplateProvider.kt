@@ -32,6 +32,7 @@ import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -72,10 +73,10 @@ class GradleScriptDefinitionsContributor(private val project: Project): ScriptDe
     }
 
     override fun getDefinitions(): List<KotlinScriptDefinition> {
-        val definitions = loadDefinitions()
-        failedToLoad.set(definitions.isEmpty())
-        return definitions
+        return loadDefinitions()
     }
+
+    override fun isError() = failedToLoad.get()
 
     // NOTE: control flow here depends on suppressing exceptions from loadGradleTemplates calls
     // TODO: possibly combine exceptions from every loadGradleTemplates call, be mindful of KT-19276
@@ -125,6 +126,7 @@ class GradleScriptDefinitionsContributor(private val project: Project): ScriptDe
     }
     catch (t: Throwable) {
         // TODO: review exception handling
+        failedToLoad.set(true)
         emptyList()
     }
 
@@ -155,9 +157,14 @@ class GradleScriptDefinitionsContributor(private val project: Project): ScriptDe
 
         }
 
+        val gradleSettings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID)
+        if (gradleSettings.getLinkedProjectsSettings().isEmpty()) return emptyList()
+
+        val projectSettings = gradleSettings.getLinkedProjectsSettings().filterIsInstance<GradleProjectSettings>().firstOrNull() ?: return emptyList()
+
         val gradleExeSettings = ExternalSystemApiUtil.getExecutionSettings<GradleExecutionSettings>(
                 project,
-                ExternalSystemApiUtil.toCanonicalPath(project.basePath!!),
+                projectSettings.externalProjectPath,
                 GradleConstants.SYSTEM_ID)
 
         val gradleHome = gradleExeSettings.gradleHome ?: error("Unable to get Gradle home directory")
