@@ -5,10 +5,8 @@
 
 package org.jetbrains.kotlin.maven.incremental;
 
-import kotlin.collections.MapsKt;
 import org.apache.maven.plugin.logging.Log;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -48,7 +46,7 @@ public class FileCopier {
         Path targetBase = Paths.get(targetBaseFile.getPath()).normalize();
         Map<String, FileSnapshot> newSnapshots = new HashMap<>();
         for (Path path : Files.walk(sourceBase).collect(Collectors.toList())) {
-            if (Files.isRegularFile(path)) continue;
+            if (!Files.isRegularFile(path)) continue;
 
             String relativePath = sourceBase.relativize(path).toString();
 
