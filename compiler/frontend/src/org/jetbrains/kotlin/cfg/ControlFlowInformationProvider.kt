@@ -841,6 +841,7 @@ class ControlFlowInformationProvider private constructor(
         when (subroutine) {
             is KtClassOrObject -> ConstructorConsistencyChecker.check(subroutine, trace, pseudocode, pseudocodeVariablesData)
             is KtSecondaryConstructor -> ConstructorConsistencyChecker.check(subroutine, trace, pseudocode, pseudocodeVariablesData)
+            is KtClassInitializer -> ConstructorConsistencyChecker.check(subroutine, trace, pseudocode, pseudocodeVariablesData)
         }
     }
 
