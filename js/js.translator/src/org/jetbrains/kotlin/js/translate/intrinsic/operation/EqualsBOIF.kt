@@ -112,7 +112,7 @@ object EqualsBOIF : BinaryOperationIntrinsicFactory {
             val descriptor = context.declarationDescriptor ?: context.currentModule
             val ktType = bindingContext.getType(expression) ?: return null
 
-            val dataFlow = DataFlowValueFactory.createDataFlowValue(expression, ktType, bindingContext, descriptor)
+            val dataFlow = context.dataFlowValueFactory.createDataFlowValue(expression, ktType, bindingContext, descriptor)
             val isPrimitiveFn = KotlinBuiltIns::isPrimitiveTypeOrNullablePrimitiveType
 
             val languageVersionSettings = context.config.configuration.languageVersionSettings

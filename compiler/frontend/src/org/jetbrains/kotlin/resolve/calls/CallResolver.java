@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.resolve.calls.model.MutableDataFlowInfoForArguments;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResults;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResultsImpl;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo;
+import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory;
 import org.jetbrains.kotlin.resolve.calls.tasks.*;
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolutionOldInference;
 import org.jetbrains.kotlin.resolve.calls.tower.PSICallResolver;
@@ -76,6 +77,7 @@ public class CallResolver {
     private SyntheticScopes syntheticScopes;
     private NewResolutionOldInference newResolutionOldInference;
     private PSICallResolver PSICallResolver;
+    private DataFlowValueFactory dataFlowValueFactory;
     private final KotlinBuiltIns builtIns;
     private final LanguageVersionSettings languageVersionSettings;
 
@@ -135,6 +137,9 @@ public class CallResolver {
     public void setSyntheticScopes(@NotNull SyntheticScopes syntheticScopes) {
         this.syntheticScopes = syntheticScopes;
     }
+
+    @Inject
+    public void setDataFlowValueFactory(@NotNull DataFlowValueFactory dataFlowValueFactory) { this.dataFlowValueFactory = dataFlowValueFactory; }
 
     @NotNull
     public OverloadResolutionResults<VariableDescriptor> resolveSimpleProperty(@NotNull BasicCallResolutionContext context) {
@@ -303,7 +308,7 @@ public class CallResolver {
         return resolveFunctionCall(
                 BasicCallResolutionContext.create(
                         trace, scope, call, expectedType, dataFlowInfo, ContextDependency.INDEPENDENT, CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS,
-                        isAnnotationContext, languageVersionSettings
+                        isAnnotationContext, languageVersionSettings, dataFlowValueFactory
                 )
         );
     }
@@ -430,7 +435,8 @@ public class CallResolver {
                 NO_EXPECTED_TYPE,
                 dataFlowInfo, ContextDependency.INDEPENDENT, CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS,
                 false,
-                languageVersionSettings);
+                languageVersionSettings,
+                dataFlowValueFactory);
 
         if (call.getCalleeExpression() == null) return checkArgumentTypesAndFail(context);
 

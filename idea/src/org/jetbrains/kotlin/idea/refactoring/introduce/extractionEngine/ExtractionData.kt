@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
+import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange
 import org.jetbrains.kotlin.psi.*
@@ -185,12 +186,14 @@ data class ExtractionData(
         val dataFlowInfo = context.getDataFlowInfoAfter(expression)
 
         resolvedCall?.getImplicitReceiverValue()?.let {
-            return dataFlowInfo.getCollectedTypes(DataFlowValueFactory.createDataFlowValueForStableReceiver(it), expression.languageVersionSettings)
+            val dataFlowValueFactory = expression.getResolutionFacade().frontendService<DataFlowValueFactory>()
+            return dataFlowInfo.getCollectedTypes(dataFlowValueFactory.createDataFlowValueForStableReceiver(it), expression.languageVersionSettings)
         }
 
         val type = resolvedCall?.resultingDescriptor?.returnType ?: return emptySet()
         val containingDescriptor = expression.getResolutionScope(context, expression.getResolutionFacade()).ownerDescriptor
-        val dataFlowValue = DataFlowValueFactory.createDataFlowValue(expression, type, context, containingDescriptor)
+        val frontendService = expression.getResolutionFacade().frontendService<DataFlowValueFactory>()
+        val dataFlowValue = frontendService.createDataFlowValue(expression, type, context, containingDescriptor)
         return dataFlowInfo.getCollectedTypes(dataFlowValue, expression.languageVersionSettings)
     }
 
