@@ -45,7 +45,6 @@ import org.jetbrains.kotlin.resolve.lazy.*
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyScriptDescriptor
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
-import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
 
 class ResolveElementCache(
@@ -217,14 +216,8 @@ class ResolveElementCache(
         var addResolveSessionBindingContext = false
         for ((elementOfAdditionalResolve, contextElements) in elementsByAdditionalResolveElement) {
             if (elementOfAdditionalResolve != null) {
-                if (elementOfAdditionalResolve !is KtParameter) {
-                    val bindingContext = getElementsAdditionalResolve(elementOfAdditionalResolve, contextElements, bodyResolveMode)
-                    bindingContexts.add(bindingContext)
-                } else {
-                    // Parameters for function literal could be met inside other parameters. We can't make resolveToDescriptors for internal elements.
-                    declarationsToResolve.addIfNotNull(elementOfAdditionalResolve.getNonStrictParentOfType<KtDeclaration>())
-                    addResolveSessionBindingContext = true
-                }
+                val bindingContext = getElementsAdditionalResolve(elementOfAdditionalResolve, contextElements, bodyResolveMode)
+                bindingContexts.add(bindingContext)
             } else {
                 contextElements
                     .mapNotNull { it.getNonStrictParentOfType<KtDeclaration>() }
