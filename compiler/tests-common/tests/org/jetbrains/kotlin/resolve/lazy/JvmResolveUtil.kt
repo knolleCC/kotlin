@@ -85,7 +85,7 @@ object JvmResolveUtil {
         packagePartProviderFactory: (GlobalSearchScope) -> PackagePartProvider
     ): AnalysisResult {
         return TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
-            project, files, CliLightClassGenerationSupport.CliBindingTrace(), configuration, packagePartProviderFactory
+            project, files, CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace(), configuration, packagePartProviderFactory
         )
     }
 }
