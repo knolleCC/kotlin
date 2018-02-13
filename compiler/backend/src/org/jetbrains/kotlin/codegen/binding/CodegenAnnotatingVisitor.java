@@ -24,13 +24,11 @@ import kotlin.Pair;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.builtins.ReflectionTypes;
 import org.jetbrains.kotlin.cfg.WhenChecker;
 import org.jetbrains.kotlin.codegen.*;
 import org.jetbrains.kotlin.codegen.coroutines.CoroutineCodegenUtilKt;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
-import org.jetbrains.kotlin.codegen.state.TypeMapperUtilsKt;
 import org.jetbrains.kotlin.codegen.when.SwitchCodegenProvider;
 import org.jetbrains.kotlin.codegen.when.WhenByEnumsMapping;
 import org.jetbrains.kotlin.config.LanguageVersionSettings;
@@ -62,7 +60,6 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue;
 import org.jetbrains.kotlin.resolve.scopes.receivers.TransientReceiver;
 import org.jetbrains.kotlin.types.KotlinType;
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker;
-import org.jetbrains.kotlin.types.typeUtil.TypeUtilsKt;
 import org.jetbrains.org.objectweb.asm.Type;
 
 import java.util.*;
@@ -610,17 +607,7 @@ class CodegenAnnotatingVisitor extends KtVisitorVoid {
             ValueParameterDescriptor adaptedParameter = descriptor.getValueParameters().get(valueParameter.getIndex());
             if (KotlinTypeChecker.DEFAULT.equalTypes(adaptedParameter.getType(), valueParameter.getType())) continue;
 
-            KotlinType originalTypeToUse =
-                    // This can be true in case when the value parameter is in the method of a generic type with out-projection.
-                    // We approximate Inv<Captured#1> to Nothing, while Inv itself can be a SAM interface safe to call here
-                    // (see testData genericSamProjectedOut.kt for details)
-                    KotlinBuiltIns.isNothing(valueParameter.getType())
-                    // In such a case we can't have a proper supertype since wildcards are not allowed there,
-                    // so we use Nothing arguments instead that leads to a raw type used for a SAM wrapper
-                    ? TypeUtilsKt.replaceArgumentsWithNothing(valueParameter.getOriginal().getType())
-                    : valueParameter.getType();
-
-            SamType samType = SamType.create(TypeMapperUtilsKt.removeExternalProjections(originalTypeToUse));
+            SamType samType = SamType.createByValueParameter(valueParameter);
             if (samType == null) continue;
 
             ResolvedValueArgument resolvedValueArgument = valueArguments.get(valueParameter.getIndex());
@@ -704,7 +691,7 @@ class CodegenAnnotatingVisitor extends KtVisitorVoid {
         FunctionDescriptor original = SamCodegenUtil.getOriginalIfSamAdapter((FunctionDescriptor) operationDescriptor);
         if (original == null) return;
 
-        SamType samType = SamType.create(original.getValueParameters().get(0).getType());
+        SamType samType = SamType.createByValueParameter(original.getValueParameters().get(0));
         if (samType == null) return;
 
         IElementType token = expression.getOperationToken();
@@ -730,7 +717,7 @@ class CodegenAnnotatingVisitor extends KtVisitorVoid {
         List<KtExpression> indexExpressions = expression.getIndexExpressions();
         List<ValueParameterDescriptor> parameters = original.getValueParameters();
         for (ValueParameterDescriptor valueParameter : parameters) {
-            SamType samType = SamType.create(valueParameter.getType());
+            SamType samType = SamType.createByValueParameter(valueParameter);
             if (samType == null) continue;
 
             if (isSetter && valueParameter.getIndex() == parameters.size() - 1) {

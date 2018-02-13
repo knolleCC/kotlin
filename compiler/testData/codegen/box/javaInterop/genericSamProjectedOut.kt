@@ -15,6 +15,14 @@ public class SomeJavaClass<A> {
     public void someFunction(Hello<A> hello) {
         ((Hello)hello).invoke("OK");
     }
+
+    public void plus(Hello<A> hello) {
+        ((Hello)hello).invoke("OK");
+    }
+
+    public void get(Hello<A> hello) {
+        ((Hello)hello).invoke("OK");
+    }
 }
 
 // FILE: main.kt
@@ -32,5 +40,21 @@ fun box(): String {
         result = it
     }
 
-    return result
+    if (result != "OK") return "fail 1: $result"
+    result = "fail"
+
+    a + {
+        result = it
+    }
+
+    if (result != "OK") return "fail 2: $result"
+    result = "fail"
+
+    a[{
+        result = it
+    }]
+
+    if (result != "OK") return "fail 3: $result"
+
+    return "OK"
 }
