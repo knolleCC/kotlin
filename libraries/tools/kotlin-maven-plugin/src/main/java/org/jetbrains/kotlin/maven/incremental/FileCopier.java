@@ -12,7 +12,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,7 +56,12 @@ public class FileCopier {
             FileSnapshot prevSnapshot = previousSnapshots.remove(relativePath);
             if (!snapshot.equals(prevSnapshot)) {
                 Path target = targetBase.resolve(relativePath);
-                Files.copy(path, target, StandardCopyOption.REPLACE_EXISTING);
+                if (!Files.isDirectory(target)) {
+                    Files.deleteIfExists(target);
+                    Files.createDirectories(target.getParent());
+                    Files.copy(path, target);
+                }
+
                 log.debug("Copied " + path + " to " + target);
             }
             newSnapshots.put(relativePath, snapshot);
